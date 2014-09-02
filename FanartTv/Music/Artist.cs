@@ -88,7 +88,7 @@ namespace FanartTv.Music
         {
             ArtistData tmp;
 
-            using (var ms = new MemoryStream(Encoding.UTF8.GetBytes(Helper.Json.GetJson(API.Server + "music/" + mbId + "?api_key=" + apiKey + "?client_key=" + clientKey))))
+            using (var ms = new MemoryStream(Encoding.UTF8.GetBytes(Helper.Json.GetJson(API.Server + "music/" + mbId + "?api_key=" + apiKey + "&client_key=" + clientKey))))
             {
                 var settings = new DataContractJsonSerializerSettings { UseSimpleDictionaryFormat = true };
                 var serializer = new DataContractJsonSerializer(typeof(ArtistData), settings);
