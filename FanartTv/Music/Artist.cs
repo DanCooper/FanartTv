@@ -22,10 +22,7 @@ namespace FanartTv.Music
     /// <param name="mbId">Musicbrainz id for the artist</param>
     public Artist(string mbId)
     {
-        if (String.IsNullOrEmpty(API.cKey))
-            List = Info(mbId, API.Key);
-        else
-            List = Info(mbId, API.Key, API.cKey);
+      List = Info(mbId, API.Key, API.cKey);
     }
 
     /// <summary>
@@ -35,7 +32,7 @@ namespace FanartTv.Music
     /// <param name="apiKey">Users api_key</param>
     public Artist(string mbId, string apiKey)
     {
-      List = Info(mbId, apiKey);
+      List = Info(mbId, apiKey, API.cKey);
     }
 
     /// <summary>
@@ -54,14 +51,22 @@ namespace FanartTv.Music
     /// </summary>
     /// <param name="mbId">Musicbrainz id for the artist</param>
     /// <param name="apiKey">Users api_key</param>
+    /// <param name="clientKey">Users client_key</param>
     /// <returns>List of Images for a Artist</returns>
-    private static ArtistData Info(string mbId, string apiKey)
+    private static ArtistData Info(string mbId, string apiKey, string clientKey)
     {
       try
       {
         ArtistData tmp;
+        API.ErrorOccurred = false;
+        API.ErrorMessage = string.Empty;
 
-        using (var ms = new MemoryStream(Encoding.UTF8.GetBytes(Helper.Json.GetJson(API.Server + "music/" + mbId + "?api_key=" + apiKey))))
+        var json = clientKey != "" ? Helper.Json.GetJson(API.Server + "music/" + mbId + "?api_key=" + apiKey) : Helper.Json.GetJson(API.Server + "music/" + mbId + "?api_key=" + apiKey + "&client_key=" + clientKey);
+
+        if (API.ErrorOccurred)
+          return new ArtistData();
+
+        using (var ms = new MemoryStream(Encoding.UTF8.GetBytes(json)))
         {
           var settings = new DataContractJsonSerializerSettings { UseSimpleDictionaryFormat = true };
           var serializer = new DataContractJsonSerializer(typeof(ArtistData), settings);
@@ -69,37 +74,12 @@ namespace FanartTv.Music
         }
         return tmp ?? new ArtistData();
       }
-      catch (Exception)
+      catch (Exception ex)
       {
+        API.ErrorOccurred = true;
+        API.ErrorMessage = ex.Message;
         return new ArtistData();
       }
-    }
-
-    /// <summary>
-    /// API Result
-    /// </summary>
-    /// <param name="mbId">Musicbrainz id for the artist</param>
-    /// <param name="apiKey">Users api_key</param>
-    /// <param name="clientKey">Users client_key</param>
-    /// <returns>List of Images for a Artist</returns>
-    private static ArtistData Info(string mbId, string apiKey, string clientKey)
-    {
-        try
-        {
-            ArtistData tmp;
-
-            using (var ms = new MemoryStream(Encoding.UTF8.GetBytes(Helper.Json.GetJson(API.Server + "music/" + mbId + "?api_key=" + apiKey + "&client_key=" + clientKey))))
-            {
-                var settings = new DataContractJsonSerializerSettings { UseSimpleDictionaryFormat = true };
-                var serializer = new DataContractJsonSerializer(typeof(ArtistData), settings);
-                tmp = (ArtistData)serializer.ReadObject(ms);
-            }
-            return tmp ?? new ArtistData();
-        }
-        catch (Exception)
-        {
-            return new ArtistData();
-        }
     }
   }
 }

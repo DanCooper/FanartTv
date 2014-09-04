@@ -22,10 +22,7 @@ namespace FanartTv.Music
     /// </summary>
     public Latest()
     {
-        if (String.IsNullOrEmpty(API.cKey))
-            List = Info(API.Key);
-        else
-            List = Info(API.Key, API.cKey);
+      List = Info(API.Key, API.cKey);
     }
 
     /// <summary>
@@ -34,7 +31,7 @@ namespace FanartTv.Music
     /// <param name="apiKey">Users api_key</param>
     public Latest(string apiKey)
     {
-      List = Info(apiKey);
+      List = Info(apiKey, API.cKey);
     }
 
     /// <summary>
@@ -51,14 +48,22 @@ namespace FanartTv.Music
     /// API Result
     /// </summary>
     /// <param name="apiKey">Users api_key</param>
+    /// <param name="clientKey"></param>
     /// <returns>List of Images for Latest Artists</returns>
-    private static List<LatestArtistData> Info(string apiKey)
+    private static List<LatestArtistData> Info(string apiKey, string clientKey)
     {
       try
       {
         List<LatestArtistData> tmp;
+        API.ErrorOccurred = false;
+        API.ErrorMessage = string.Empty;
 
-        using (var ms = new MemoryStream(Encoding.UTF8.GetBytes(Helper.Json.GetJson(API.Server + "music/latest" + "?api_key=" + apiKey))))
+        var json = clientKey != "" ? Helper.Json.GetJson(API.Server + "music/latest" + "?api_key=" + apiKey) : Helper.Json.GetJson(API.Server + "music/latest" + "?api_key=" + apiKey + "&client_key=" + clientKey);
+
+        if (API.ErrorOccurred)
+          return new List<LatestArtistData>();
+
+        using (var ms = new MemoryStream(Encoding.UTF8.GetBytes(json)))
         {
           var settings = new DataContractJsonSerializerSettings { UseSimpleDictionaryFormat = true };
           var serializer = new DataContractJsonSerializer(typeof(List<LatestArtistData>), settings);
@@ -66,35 +71,12 @@ namespace FanartTv.Music
         }
         return tmp ?? new List<LatestArtistData>();
       }
-      catch (Exception)
+      catch (Exception ex)
       {
+        API.ErrorOccurred = true;
+        API.ErrorMessage = ex.Message;
         return new List<LatestArtistData>();
       }
-    }
-
-    /// <summary>
-    /// API Result
-    /// </summary>
-    /// <param name="apiKey">Users api_key</param>
-    /// <returns>List of Images for Latest Artists</returns>
-    private static List<LatestArtistData> Info(string apiKey, string clientKey)
-    {
-        try
-        {
-            List<LatestArtistData> tmp;
-
-            using (var ms = new MemoryStream(Encoding.UTF8.GetBytes(Helper.Json.GetJson(API.Server + "music/latest" + "?api_key=" + apiKey + "&client_key=" + clientKey))))
-            {
-                var settings = new DataContractJsonSerializerSettings { UseSimpleDictionaryFormat = true };
-                var serializer = new DataContractJsonSerializer(typeof(List<LatestArtistData>), settings);
-                tmp = (List<LatestArtistData>)serializer.ReadObject(ms);
-            }
-            return tmp ?? new List<LatestArtistData>();
-        }
-        catch (Exception)
-        {
-            return new List<LatestArtistData>();
-        }
     }
   }
 }

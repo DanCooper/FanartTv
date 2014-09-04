@@ -17,6 +17,16 @@
     /// </summary>
     public static string Server = "http://webservice.fanart.tv/v3/";
 
+    /// <summary>
+    /// Is an Error occurred
+    /// </summary>
+    public static bool ErrorOccurred = false;
+
+    /// <summary>
+    /// Error Message
+    /// </summary>
+    public static string ErrorMessage = string.Empty;
+
     private static bool _proxy;
 
     /// <summary>

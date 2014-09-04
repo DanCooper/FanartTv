@@ -22,10 +22,7 @@ namespace FanartTv.TV
     /// </summary>
     public Latest()
     {
-        if (String.IsNullOrEmpty(API.cKey))
-            List = Info(API.Key);
-        else
-            List = Info(API.Key, API.cKey);
+      List = Info(API.Key, API.cKey);
     }
 
     /// <summary>
@@ -34,7 +31,7 @@ namespace FanartTv.TV
     /// <param name="apiKey">Users api_key</param>
     public Latest(string apiKey)
     {
-      List = Info(apiKey);
+      List = Info(apiKey, API.cKey);
     }
 
     /// <summary>
@@ -51,14 +48,22 @@ namespace FanartTv.TV
     /// API Result
     /// </summary>
     /// <param name="apiKey">Users api_key</param>
+    /// <param name="clientKey">Users client_key</param>
     /// <returns>List of images for Latest Shows</returns>
-    private static List<TvLatest> Info(string apiKey)
+    private static List<TvLatest> Info(string apiKey, string clientKey)
     {
       try
       {
         List<TvLatest> tmp;
+        API.ErrorOccurred = false;
+        API.ErrorMessage = string.Empty;
 
-        using (var ms = new MemoryStream(Encoding.UTF8.GetBytes(Helper.Json.GetJson(API.Server + "tv/latest" + "?api_key=" + apiKey))))
+        var json = clientKey != "" ? Helper.Json.GetJson(API.Server + "tv/latest" + "?api_key=" + apiKey) : Helper.Json.GetJson(API.Server + "tv/latest" + "?api_key=" + apiKey + "&client_key=" + clientKey);
+
+        if (API.ErrorOccurred)
+          return new List<TvLatest>();
+
+        using (var ms = new MemoryStream(Encoding.UTF8.GetBytes(json)))
         {
           var settings = new DataContractJsonSerializerSettings { UseSimpleDictionaryFormat = true };
           var serializer = new DataContractJsonSerializer(typeof(List<TvLatest>), settings);
@@ -66,36 +71,12 @@ namespace FanartTv.TV
         }
         return tmp ?? new List<TvLatest>();
       }
-      catch (Exception)
+      catch (Exception ex)
       {
+        API.ErrorOccurred = true;
+        API.ErrorMessage = ex.Message;
         return new List<TvLatest>();
       }
-    }
-
-    /// <summary>
-    /// API Result
-    /// </summary>
-    /// <param name="apiKey">Users api_key</param>
-    /// <param name="clientKey">Users client_key</param>
-    /// <returns>List of images for Latest Shows</returns>
-    private static List<TvLatest> Info(string apiKey, string clientKey)
-    {
-        try
-        {
-            List<TvLatest> tmp;
-
-            using (var ms = new MemoryStream(Encoding.UTF8.GetBytes(Helper.Json.GetJson(API.Server + "tv/latest" + "?api_key=" + apiKey + "&client_key=" + clientKey))))
-            {
-                var settings = new DataContractJsonSerializerSettings { UseSimpleDictionaryFormat = true };
-                var serializer = new DataContractJsonSerializer(typeof(List<TvLatest>), settings);
-                tmp = (List<TvLatest>)serializer.ReadObject(ms);
-            }
-            return tmp ?? new List<TvLatest>();
-        }
-        catch (Exception)
-        {
-            return new List<TvLatest>();
-        }
     }
   }
 }
